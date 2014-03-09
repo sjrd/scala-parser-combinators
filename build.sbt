@@ -1,17 +1,12 @@
-scalaModuleSettings
+scalaJSSettings
 
-name                       := "scala-parser-combinators"
+name                       := "scalajs-parser-combinators"
 
 version                    := "1.0.0-SNAPSHOT"
 
+organization               := "org.scalajs"
+
 scalaVersion               := "2.11.0-M8"
-
-snapshotScalaBinaryVersion := "2.11.0-M8"
-
-// important!! must come here (why?)
-scalaModuleOsgiSettings
-
-OsgiKeys.exportPackage := Seq(s"scala.util.parsing.*;version=${version.value}")
 
 // needed to fix classloader issues (see scala-xml#20)
 fork in Test := true
