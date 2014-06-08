@@ -1,10 +1,9 @@
 import scala.util.parsing.json._
 import scala.collection.immutable.TreeMap
 
-import org.junit.Test
-import org.junit.Assert.{assertEquals, assertTrue}
+import utest._
 
-class JsonTest {
+object JsonTest extends TestSuite {
   /* This method converts parsed JSON back into real JSON notation with objects in
    * sorted-key order. Not required by the spec, but it allows us to do a stable
    * toString comparison. */
@@ -32,8 +31,8 @@ class JsonTest {
 
   // For this one, just parsing should be considered a pass
   def printJSON(given : String) : Unit =
-    assertTrue("Parse failed for \"%s\"".format(given), (JSON parseRaw given).isDefined)
-   
+    assert((JSON parseRaw given).isDefined)
+
   // For this usage, do a raw parse (to JSONObject/JSONArray)
   def printJSON(given : String, expected : JSONType) {
     printJSON(given, JSON.parseRaw, expected)
@@ -46,14 +45,8 @@ class JsonTest {
 
   // For this usage, do configurable parsing so that you can do raw if desired
   def printJSON[T](given : String, parser : String => T, expected : Any) {
-    parser(given) match {
-      case None => assertTrue("Parse failed for \"%s\"".format(given), false)
-      case Some(parsed) => if (parsed != expected) {
-        val eStr = sortJSON(expected).toString
-        val pStr = sortJSON(parsed).toString
-        assertTrue(stringDiff(eStr,pStr), false)
-      }
-    }
+    val parsed = parser(given)
+    assert(parsed == Some(expected))
   }
 
   def stringDiff (expected : String, actual : String): String = {
@@ -71,73 +64,71 @@ class JsonTest {
     }
   }
 
-  // The library should differentiate between lower case "l" and number "1" (ticket #136)
-  @Test
-  def testEllVsOne: Unit = {
-    printJSON("{\"name\" : \"value\"}", JSONObject(Map("name" -> "value")))
-    printJSON("{\"name\" : \"va1ue\"}", JSONObject(Map("name" -> "va1ue")))
-    printJSON("{\"name\" : { \"name1\" : \"va1ue1\", \"name2\" : \"va1ue2\" } }",
-              JSONObject(Map("name" -> JSONObject(Map("name1" -> "va1ue1", "name2" -> "va1ue2")))))
-  }
+  def tests = TestSuite {
 
-  // Unicode escapes should be handled properly
-  @Test
-  def testEscapes: Unit =
-    printJSON("{\"name\" : \"\\u0022\"}")
+    // The library should differentiate between lower case "l" and number "1" (ticket #136)
+    "testEllVsOne" - {
+      printJSON("{\"name\" : \"value\"}", JSONObject(Map("name" -> "value")))
+      printJSON("{\"name\" : \"va1ue\"}", JSONObject(Map("name" -> "va1ue")))
+      printJSON("{\"name\" : { \"name1\" : \"va1ue1\", \"name2\" : \"va1ue2\" } }",
+                JSONObject(Map("name" -> JSONObject(Map("name1" -> "va1ue1", "name2" -> "va1ue2")))))
+    }
 
-  // The library should return a map for JSON objects (ticket #873)
-  @Test
-  def testMap: Unit =
-    printJSONFull("{\"function\" : \"add_symbol\"}", Map("function" -> "add_symbol"))
+    // Unicode escapes should be handled properly
+    "testEscapes" - {
+      printJSON("{\"name\" : \"\\u0022\"}")
+    }
 
-  // The library should recurse into arrays to find objects (ticket #2207)
-  @Test
-  def testObjectsInArrays: Unit =
-    printJSON("[{\"a\" : \"team\"},{\"b\" : 52}]", JSONArray(List(JSONObject(Map("a" -> "team")), JSONObject(Map("b" -> 52.0)))))
+    // The library should return a map for JSON objects (ticket #873)
+    "testMap" - {
+      printJSONFull("{\"function\" : \"add_symbol\"}", Map("function" -> "add_symbol"))
+    }
 
-  
-  // The library should differentiate between empty maps and lists (ticket #3284)
-  @Test
-  def testEmptyMapsVsLists: Unit = {
-    printJSONFull("{}", Map()) 
-    printJSONFull("[]", List())
-  }
-  
-  // Lists should be returned in the same order as specified
-  @Test
-  def testListOrder: Unit = 
-    printJSON("[4,1,3,2,6,5,8,7]", JSONArray(List[Double](4,1,3,2,6,5,8,7)))
+    // The library should recurse into arrays to find objects (ticket #2207)
+    "testObjectsInArrays" - {
+      printJSON("[{\"a\" : \"team\"},{\"b\" : 52}]", JSONArray(List(JSONObject(Map("a" -> "team")), JSONObject(Map("b" -> 52.0)))))
+    }
 
-  // Additional tests
-  @Test
-  def testAdditional: Unit =
-  printJSON("{\"age\": 0}")
+    // The library should differentiate between empty maps and lists (ticket #3284)
+    "testEmptyMapsVsLists" - {
+      printJSONFull("{}", Map())
+      printJSONFull("[]", List())
+    }
 
-  // The library should do a proper toString representation using default and custom renderers (ticket #3605)
-  @Test
-  def testDefaultAndCustomRenderers: Unit = {
-    assertEquals("{\"name\" : \"va1ue\"}", JSONObject(Map("name" -> "va1ue")).toString())
-    assertEquals("{\"name\" : {\"name1\" : \"va1ue1\", \"name2\" : \"va1ue2\"}}",
-               JSONObject(Map("name" -> JSONObject(TreeMap("name1" -> "va1ue1", "name2" -> "va1ue2")))).toString())
+    // Lists should be returned in the same order as specified
+    "testListOrder" - {
+      printJSON("[4,1,3,2,6,5,8,7]", JSONArray(List[Double](4,1,3,2,6,5,8,7)))
+    }
 
-    assertEquals("[4.0, 1.0, 3.0, 2.0, 6.0, 5.0, 8.0, 7.0]", JSONArray(List[Double](4,1,3,2,6,5,8,7)).toString())
-  }
+    // Additional tests
+    "testAdditional" - {
+      printJSON("{\"age\": 0}")
+    }
 
-  // A test method that escapes all characters in strings
-  def escapeEverything (in : Any) : String = in match {
-    case s : String => "\"" + s.map(c => "\\u%04x".format(c : Int)).mkString + "\""
-    case jo : JSONObject => jo.toString(escapeEverything _)
-    case ja : JSONArray => ja.toString(escapeEverything _)
-    case other => other.toString
-  }
+    // The library should do a proper toString representation using default and custom renderers (ticket #3605)
+    "testDefaultAndCustomRenderers" - {
+      assert("{\"name\" : \"va1ue\"}" == JSONObject(Map("name" -> "va1ue")).toString())
+      assert("{\"name\" : {\"name1\" : \"va1ue1\", \"name2\" : \"va1ue2\"}}" ==
+                 JSONObject(Map("name" -> JSONObject(TreeMap("name1" -> "va1ue1", "name2" -> "va1ue2")))).toString())
 
-  @Test
-  def testEscapeEverything: Unit = 
-    assertEquals("{\"\\u006e\\u0061\\u006d\\u0065\" : \"\\u0076\\u0061\\u006c\"}", JSONObject(Map("name" -> "val")).toString(escapeEverything _))
+      assert("[4.0, 1.0, 3.0, 2.0, 6.0, 5.0, 8.0, 7.0]" == JSONArray(List[Double](4,1,3,2,6,5,8,7)).toString())
+    }
 
+    // A test method that escapes all characters in strings
+    def escapeEverything (in : Any) : String = in match {
+      case s : String => "\"" + s.map(c => "\\u%04x".format(c : Int)).mkString + "\""
+      case jo : JSONObject => jo.toString(escapeEverything _)
+      case ja : JSONArray => ja.toString(escapeEverything _)
+      case other => other.toString
+    }
 
-  // from http://en.wikipedia.org/wiki/JSON
-  val sample1 = """
+    "testEscapeEverything" - {
+      val f = escapeEverything _
+      assert("{\"\\u006e\\u0061\\u006d\\u0065\" : \"\\u0076\\u0061\\u006c\"}" == JSONObject(Map("name" -> "val")).toString(f))
+    }
+
+    // from http://en.wikipedia.org/wiki/JSON
+    val sample1 = """
 {
     "firstName": "John",
     "lastName": "Smith",
@@ -153,28 +144,28 @@ class JsonTest {
     ]
 }"""
 
-  // Should be equivalent to:
-  val sample1Obj = Map(
-    "firstName" -> "John",
-    "lastName" -> "Smith",
-    "address" -> Map(
-      "streetAddress" -> "21 2nd Street",
-      "city" -> "New York",
-      "state" -> "NY",
-      "postalCode" -> 10021
-    ),
-    "phoneNumbers"-> List(
-        "212 732-1234",
-        "646 123-4567"
+    // Should be equivalent to:
+    val sample1Obj = Map(
+      "firstName" -> "John",
+      "lastName" -> "Smith",
+      "address" -> Map(
+        "streetAddress" -> "21 2nd Street",
+        "city" -> "New York",
+        "state" -> "NY",
+        "postalCode" -> 10021
+      ),
+      "phoneNumbers"-> List(
+          "212 732-1234",
+          "646 123-4567"
+      )
     )
-  )
 
-  @Test
-  def testSample1: Unit = 
-    printJSONFull(sample1, sample1Obj)
+    "testSample1" - {
+      printJSONFull(sample1, sample1Obj)
+    }
 
-  // from http://www.developer.com/lang/jscript/article.php/3596836
-  val sample2 = """
+    // from http://www.developer.com/lang/jscript/article.php/3596836
+    val sample2 = """
 {
    "fullname": "Sean Kelly",
    "org": "SK Consulting",
@@ -199,14 +190,14 @@ class JsonTest {
    ]
 }"""
 
-  @Test
-  def testSampl2: Unit = 
-    printJSON(sample2)
+    "testSampl2" - {
+      printJSON(sample2)
+    }
 
-  // from http://json.org/example.html
-  val sample3 = """
+    // from http://json.org/example.html
+    val sample3 = """
 {"web-app": {
-  "servlet": [   
+  "servlet": [
     {
       "servlet-name": "cofaxCDS",
       "servlet-class": "org.cofax.cds.CDSServlet",
@@ -262,7 +253,7 @@ class JsonTest {
     {
       "servlet-name": "cofaxAdmin",
       "servlet-class": "org.cofax.cds.AdminServlet"},
- 
+
     {
       "servlet-name": "fileServlet",
       "servlet-class": "org.cofax.cds.FileServlet"},
@@ -289,14 +280,16 @@ class JsonTest {
     "cofaxAdmin": "/admin/*",
     "fileServlet": "/static/*",
     "cofaxTools": "/tools/*"},
- 
+
   "taglib": {
     "taglib-uri": "cofax.tld",
     "taglib-location": "/WEB-INF/tlds/cofax.tld"}
   }
 }"""
 
-  @Test
-  def testSample3 =
-    printJSON(sample3)
+    "testSample3" - {
+      printJSON(sample3)
+    }
+
+  }
 }

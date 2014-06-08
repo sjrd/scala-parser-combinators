@@ -1,15 +1,9 @@
 import scala.util.parsing.combinator.Parsers
 import scala.util.parsing.input.CharSequenceReader
 
-import java.io.{File,StringReader}
+import utest._
 
-import scala.util.parsing.combinator.Parsers
-import scala.util.parsing.input.{CharArrayReader, StreamReader}
-
-import org.junit.Test
-import org.junit.Assert.assertEquals
-
-class T1100 {
+object T1100 extends TestSuite {
   class TestParsers extends Parsers {
     type Elem = Char
 
@@ -22,10 +16,13 @@ val expected = """[1.4] error: errors are propagated
 aaab
    ^"""
 
-  @Test
-  def test(): Unit = {
-    val tstParsers = new TestParsers
-    val s = new CharSequenceReader("aaab")
-    assertEquals(expected, tstParsers.p(s).toString)
+  def tests = TestSuite {
+
+    "t1100" - {
+      val tstParsers = new TestParsers
+      val s = new CharSequenceReader("aaab")
+      assert(expected == tstParsers.p(s).toString)
+    }
+
   }
 }
