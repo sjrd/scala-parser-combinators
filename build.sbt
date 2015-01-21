@@ -1,6 +1,6 @@
 import bintray.Keys.{repository, bintrayOrganization, bintray}
 
-scalaJSSettings
+enablePlugins(ScalaJSPlugin)
 
 organization               := "org.scalajs"
 
@@ -10,7 +10,11 @@ version                    := "1.0.2"
 
 scalaVersion               := "2.11.1"
 
-utest.jsrunner.Plugin.utestJsSettings
+testFrameworks += new TestFramework("utest.runner.Framework")
+
+libraryDependencies ++= Seq(
+  "com.lihaoyi" %%% "utest" % "0.2.5-RC1" % "test"
+)
 
 homepage := Some(url("http://www.scala-js.org/"))
 
