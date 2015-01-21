@@ -13,6 +13,8 @@ package util.parsing
 package combinator
 package lexical
 
+import java.util.regex.Pattern
+
 import token._
 import input.CharArrayReader.EofCh
 
@@ -26,8 +28,11 @@ import input.CharArrayReader.EofCh
  */
 abstract class Lexical extends Scanners with Tokens {
 
+  private lazy val isLetterPattern = Pattern.compile("\\p{L}")
+
   /** A character-parser that matches a letter (and returns it).*/
-  def letter = elem("letter", _.isLetter)
+  // def letter = elem("letter", _.isLetter)
+  def letter = elem("letter", e => isLetterPattern.matcher(e.toString).matches())
 
   /** A character-parser that matches a digit (and returns it).*/
   def digit = elem("digit", _.isDigit)
