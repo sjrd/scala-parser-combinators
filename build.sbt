@@ -13,7 +13,7 @@ scalaVersion               := "2.11.1"
 testFrameworks += new TestFramework("utest.runner.Framework")
 
 libraryDependencies ++= Seq(
-  "com.lihaoyi" %%% "utest" % "0.2.5-RC1" % "test"
+  "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
 )
 
 homepage := Some(url("http://www.scala-js.org/"))
