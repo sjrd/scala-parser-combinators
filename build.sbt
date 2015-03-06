@@ -1,8 +1,6 @@
-import bintray.Keys.{repository, bintrayOrganization, bintray}
-
 enablePlugins(ScalaJSPlugin)
 
-organization               := "org.scalajs"
+organization               := "org.scala-js"
 
 name                       := "scala-parser-combinators"
 
@@ -16,10 +14,33 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
 )
 
-homepage := Some(url("http://www.scala-js.org/"))
+homepage := Some(url("http://scala-js.org/"))
 
-licenses += ("BSD New", url("https://github.com/scala-js/scala-js/blob/master/LICENSE"))
+licenses += ("BSD 3-Clause", url("http://opensource.org/licenses/BSD-3-Clause"))
 
-repository in bintray := "scala-js-releases"
+scmInfo := Some(ScmInfo(
+    url("https://github.com/sjrd/scala-parser-combinators"),
+    "scm:git:git@github.com:sjrd/scala-parser-combinators.git",
+    Some("scm:git:git@github.com:sjrd/scala-parser-combinators.git")))
 
-bintrayOrganization in bintray := Some("scala-js")
+publishMavenStyle := true
+
+publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases" at nexus + "service/local/staging/deploy/maven2")
+}
+
+pomExtra := (
+  <developers>
+    <developer>
+      <id>sjrd</id>
+      <name>Sébastien Doeraene</name>
+      <url>https://github.com/sjrd/</url>
+    </developer>
+  </developers>
+)
+
+pomIncludeRepository := { _ => false }
